@@ -54,9 +54,9 @@ video{
 </audio>
 
 <script>
-async function generate(){
-  let prompt = document.getElementById("prompt").value;
-  if(!prompt){
+async function generate() {
+  const prompt = document.getElementById("prompt").value.trim();
+  if (!prompt) {
     alert("Please enter a prompt!");
     return;
   }
@@ -64,26 +64,40 @@ async function generate(){
   document.getElementById("status").innerText = "Generating AI video...";
   document.getElementById("music").play();
 
-  try{
-    // Replicate API call for AI avatar video
-    let response = await fetch("https://api.replicate.com/v1/predictions", {
-      method:"POST",
-      headers:{
-        "Authorization":"Token r8_BCo3XfXb4E0tJKPQh5cxkW4mLa7WjFK12kkk7", // <-- अपना token यहाँ है
-        "Content-Type":"application/json"
+  try {
+    // Step 1: Create prediction
+    const createResponse = await fetch("https://api.replicate.com/v1/predictions", {
+      method: "POST",
+      headers: {
+        "Authorization": "Token r8_BCo3XfXb4E0tJKPQh5cxkW4mLa7WjFK12kkk7", // <-- अपना token यहाँ डालो
+        "Content-Type": "application/json"
       },
-      body:JSON.stringify({
-        version:"db21e45b6b8eaa9b7b0c8a0a4a4b9e3c3f2b1f0",
-        input:{prompt:prompt}
+      body: JSON.stringify({
+        version: "db21e45b6b8eaa9b7b0c8a0a4a4b9e3c3f2b1f0",
+        input: { prompt: prompt }
       })
     });
 
-    let data = await response.json();
-    console.log(data);
+    let prediction = await createResponse.json();
 
-    // Check if video output exists
-    if(data.output && data.output.length > 0){
-      let videoUrl = data.output[0];
+    // Step 2: Poll until finished
+    let status = prediction.status;
+    while (status !== "succeeded" && status !== "failed") {
+      await new Promise(r => setTimeout(r, 5000)); // wait 5 seconds
+      const getResponse = await fetch(`https://api.replicate.com/v1/predictions/${prediction.id}`, {
+        headers: {
+          "Authorization": "Token r8_BCo3XfXb4E0tJKPQh5cxkW4mLa7WjFK12kkk7",
+          "Content-Type": "application/json"
+        }
+      });
+      prediction = await getResponse.json();
+      status = prediction.status;
+      document.getElementById("status").innerText = "Generating AI video... (" + status + ")";
+    }
+
+    // Step 3: Set video URL if succeeded
+    if (status === "succeeded" && prediction.output && prediction.output.length > 0) {
+      const videoUrl = prediction.output[0];
       document.getElementById("video").src = videoUrl;
       document.getElementById("download").href = videoUrl;
       document.getElementById("status").innerText = "Video ready!";
@@ -91,15 +105,15 @@ async function generate(){
       document.getElementById("status").innerText = "Video generation failed!";
     }
 
-    // AI Voice using browser SpeechSynthesis
-    if(window.speechSynthesis){
-      let utter = new SpeechSynthesisUtterance(prompt);
-      utter.lang='en-US';
+    // AI Voice
+    if (window.speechSynthesis) {
+      const utter = new SpeechSynthesisUtterance(prompt);
+      utter.lang = 'en-US';
       window.speechSynthesis.speak(utter);
     }
 
-  }catch(e){
-    console.error(e);
+  } catch (err) {
+    console.error(err);
     document.getElementById("status").innerText = "Error generating video.";
   }
 }
