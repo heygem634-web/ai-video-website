@@ -16,6 +16,7 @@ textarea{
 width:90%;
 height:120px;
 padding:10px;
+font-size:16px;
 }
 
 button{
@@ -24,6 +25,12 @@ background:#22c55e;
 border:none;
 color:white;
 font-size:18px;
+cursor:pointer;
+}
+
+video{
+margin-top:20px;
+width:300px;
 }
 </style>
 
@@ -33,13 +40,45 @@ font-size:18px;
 
 <h1>AI Video Generator</h1>
 
-<p>Enter prompt to generate video</p>
+<p>Enter prompt to generate AI video</p>
 
-<textarea placeholder="Write your prompt"></textarea>
+<textarea id="prompt"></textarea>
 
 <br><br>
 
-<button>Generate Video</button>
+<button onclick="generate()">Generate Video</button>
+
+<p id="status"></p>
+
+<video id="video" controls></video>
+
+<script>
+
+async function generate(){
+
+let prompt=document.getElementById("prompt").value
+
+document.getElementById("status").innerText="Generating video..."
+
+let response = await fetch("https://api.replicate.com/v1/predictions",{
+method:"POST",
+headers:{
+"Authorization":"Token YOUR_REPLICATE_TOKEN",
+"Content-Type":"application/json"
+},
+body:JSON.stringify({
+version:"db21e45b6b8eaa9b7b0c8a0a4a4b9e3c3f2b1f0",
+input:{
+prompt:prompt
+}
+})
+})
+
+document.getElementById("status").innerText="Video generation started..."
+
+}
+
+</script>
 
 </body>
 </html>
