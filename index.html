@@ -1,118 +1,104 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Pro AI Video Generator</title>
+<title>AI Video Generator</title>
 <style>
 body{
-  font-family:Arial;
-  background:#0f172a;
-  color:white;
-  text-align:center;
-  padding:30px;
+  font-family: Arial;
+  background: #0f172a;
+  color: white;
+  text-align: center;
+  padding: 30px;
 }
 textarea{
-  width:90%;
-  height:120px;
-  padding:10px;
-  font-size:16px;
+  width: 90%;
+  height: 120px;
+  padding: 10px;
+  font-size: 16px;
 }
 button{
-  padding:15px 30px;
-  background:#22c55e;
-  border:none;
-  color:white;
-  font-size:18px;
-  cursor:pointer;
-  margin:10px;
+  padding: 15px 30px;
+  background: #22c55e;
+  border: none;
+  color: white;
+  font-size: 18px;
+  cursor: pointer;
+  margin: 10px;
 }
 video{
-  margin-top:20px;
-  width:320px;
-  border-radius:10px;
+  margin-top: 20px;
+  width: 320px;
+  border-radius: 10px;
 }
 </style>
 </head>
 
 <body>
 
-<h1>Professional AI Video Generator</h1>
+<h1>AI Video Generator</h1>
 <p>Enter prompt to generate AI avatar video with voice</p>
-<textarea id="prompt" placeholder="Example: Motivational quote in a cinematic style">A motivational quote in cinematic style</textarea>
-<br>
+<textarea id="prompt">A cinematic short clip of a cat walking in a beautiful forest</textarea><br>
 
 <button onclick="generate()">Generate Video</button>
 <p id="status"></p>
 
-<video id="video" controls></video>
-<br>
-<a id="download" download="ai-video.mp4">
-<button>Download Video</button>
-</a>
+<video id="video" controls></video><br>
+<a id="download" download="ai-video.mp4"><button>Download Video</button></a>
 
 <audio id="music" loop>
   <source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8a73467.mp3" type="audio/mp3">
 </audio>
 
 <script>
-async function generate() {
+async function generate(){
   const prompt = document.getElementById("prompt").value.trim();
-  if (!prompt) {
-    alert("Please enter a prompt!");
-    return;
-  }
+  if(!prompt){alert("Please enter a prompt!"); return;}
 
   document.getElementById("status").innerText = "Generating AI video...";
   document.getElementById("music").play();
 
-  try {
+  try{
     // Step 1: Create prediction
     const createResponse = await fetch("https://api.replicate.com/v1/predictions", {
       method: "POST",
-      headers: {
-        "Authorization": "Token r8_BCo3XfXb4E0tJKPQh5cxkW4mLa7WjFK12kkk7", // <-- अपना token यहाँ डालो
-        "Content-Type": "application/json"
+      headers:{
+        "Authorization":"Token r8_GfioW89xSYFXf7ZKYiH6SORxyau8sdA2ZuXuA", // <-- Your NEW token
+        "Content-Type":"application/json"
       },
       body: JSON.stringify({
-        version: "db21e45b6b8eaa9b7b0c8a0a4a4b9e3c3f2b1f0",
-        input: { prompt: prompt }
+        version:"368d4063e21ecf73746b8e6d27989837d97ba07b5eca43a4e5488c852e10c2ec", // Tested model version
+        input:{prompt:prompt}
       })
     });
 
     let prediction = await createResponse.json();
 
-    // Step 2: Poll until finished
+    // Step 2: Poll until video is ready
     let status = prediction.status;
-    while (status !== "succeeded" && status !== "failed") {
-      await new Promise(r => setTimeout(r, 5000)); // wait 5 seconds
+    while(status !== "succeeded" && status !== "failed"){
+      await new Promise(r => setTimeout(r,5000));
       const getResponse = await fetch(`https://api.replicate.com/v1/predictions/${prediction.id}`, {
-        headers: {
-          "Authorization": "Token r8_BCo3XfXb4E0tJKPQh5cxkW4mLa7WjFK12kkk7",
-          "Content-Type": "application/json"
+        headers:{
+          "Authorization":"Token r8_GfioW89xSYFXf7ZKYiH6SORxyau8sdA2ZuXuA",
+          "Content-Type":"application/json"
         }
       });
       prediction = await getResponse.json();
       status = prediction.status;
-      document.getElementById("status").innerText = "Generating AI video... (" + status + ")";
+      document.getElementById("status").innerText = "Generating… (" + status + ")";
     }
 
-    // Step 3: Set video URL if succeeded
-    if (status === "succeeded" && prediction.output && prediction.output.length > 0) {
+    // Step 3: Set video if succeeded
+    if(status === "succeeded" && prediction.output && prediction.output.length > 0){
       const videoUrl = prediction.output[0];
       document.getElementById("video").src = videoUrl;
       document.getElementById("download").href = videoUrl;
-      document.getElementById("status").innerText = "Video ready!";
+      document.getElementById("status").innerText = "Video ready! 🎉";
     } else {
       document.getElementById("status").innerText = "Video generation failed!";
     }
 
-    // AI Voice
-    if (window.speechSynthesis) {
-      const utter = new SpeechSynthesisUtterance(prompt);
-      utter.lang = 'en-US';
-      window.speechSynthesis.speak(utter);
-    }
-
-  } catch (err) {
+  } catch(err){
     console.error(err);
     document.getElementById("status").innerText = "Error generating video.";
   }
