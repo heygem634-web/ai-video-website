@@ -55,25 +55,25 @@ video{
 
 <script>
 async function generate(){
-  let prompt=document.getElementById("prompt").value;
+  let prompt = document.getElementById("prompt").value;
   if(!prompt){
     alert("Please enter a prompt!");
     return;
   }
 
-  document.getElementById("status").innerText="Generating AI video...";
+  document.getElementById("status").innerText = "Generating AI video...";
   document.getElementById("music").play();
 
   try{
     // Replicate API call for AI avatar video
-    let response = await fetch("https://api.replicate.com/v1/predictions",{
+    let response = await fetch("https://api.replicate.com/v1/predictions", {
       method:"POST",
       headers:{
-        "Authorization":"Token YOUR_REPLICATE_TOKEN", r8_BCo3XfXb4E0tJKPQh5cxkW4mLa7WjFK12kkk7
+        "Authorization":"Token r8_BCo3XfXb4E0tJKPQh5cxkW4mLa7WjFK12kkk7", // <-- अपना token यहाँ है
         "Content-Type":"application/json"
-      },l
+      },
       body:JSON.stringify({
-        version:"db21e45b6b8eaa9b7b0c8a0a4a4b9e3c3f2b1f0", // AI video model version
+        version:"db21e45b6b8eaa9b7b0c8a0a4a4b9e3c3f2b1f0",
         input:{prompt:prompt}
       })
     });
@@ -81,14 +81,14 @@ async function generate(){
     let data = await response.json();
     console.log(data);
 
-    // Assume first URL is video output
-    let videoUrl = data.output[0];
-    if(videoUrl){
+    // Check if video output exists
+    if(data.output && data.output.length > 0){
+      let videoUrl = data.output[0];
       document.getElementById("video").src = videoUrl;
       document.getElementById("download").href = videoUrl;
-      document.getElementById("status").innerText="Video ready!";
-    }else{
-      document.getElementById("status").innerText="Video generation failed!";
+      document.getElementById("status").innerText = "Video ready!";
+    } else {
+      document.getElementById("status").innerText = "Video generation failed!";
     }
 
     // AI Voice using browser SpeechSynthesis
@@ -100,7 +100,7 @@ async function generate(){
 
   }catch(e){
     console.error(e);
-    document.getElementById("status").innerText="Error generating video.";
+    document.getElementById("status").innerText = "Error generating video.";
   }
 }
 </script>
